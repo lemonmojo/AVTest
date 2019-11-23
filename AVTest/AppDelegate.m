@@ -82,7 +82,30 @@
     
     [player play];
     
+    dispatch_async(dispatch_get_main_queue(), ^{
+        BOOL isInputActive = [self isDeviceActive:self.defaultInputDevice];
+        
+        NSLog(@"Default Input Device Active: %@", isInputActive ? @"Yes" : @"No");
+    });
+    
     return YES;
+}
+
+- (BOOL)isDeviceActive:(AudioDeviceID)deviceId {
+    uint32 val;
+    uint32 size = sizeof(val);
+    
+    AudioObjectPropertyAddress pa = {
+        kAudioDevicePropertyDeviceIsRunningSomewhere,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMaster
+    };
+    
+    AudioObjectGetPropertyData(deviceId, &pa, 0, NULL, &size, &val);
+    
+    BOOL isActive = val == 1;
+    
+    return isActive;
 }
 
 - (AudioDeviceID)defaultOutputDevice {
@@ -103,6 +126,26 @@
     }
     
     return outputDeviceID;
+}
+
+- (AudioDeviceID)defaultInputDevice {
+    AudioObjectPropertyAddress propertyAddress = {
+        kAudioHardwarePropertyDefaultInputDevice,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMaster };
+    
+    AudioDeviceID inputDeviceID;
+    UInt32 propertySize = sizeof(inputDeviceID);
+    
+    OSStatus err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &propertySize, &inputDeviceID);
+    
+    if (err) {
+        NSLog(@"AudioObjectGetPropertyData failed: %d", (int)err);
+        
+        return 0;
+    }
+    
+    return inputDeviceID;
 }
 
 - (BOOL)setEngine:(AVAudioEngine*)engine outputDevice:(AudioDeviceID)outputDeviceID {
