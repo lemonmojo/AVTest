@@ -39,13 +39,7 @@
     __block AVAudioEngine *engine = AVAudioEngine.new;
     
     if (explicitlySetOutputDevice) {
-        AudioDeviceID defaultOutputDevice = [self defaultOutputDevice];
-        
-        if (defaultOutputDevice == 0) {
-            return NO;
-        }
-        
-        if (![self setEngine:engine outputDevice:defaultOutputDevice]) {
+        if (![self setOutputDeviceToDefaultOutputDeviceForEngine:engine]) {
             return NO;
         }
     } else if (explicitlyDisableInputDevice) {
@@ -125,6 +119,20 @@
     if (err) {
         NSLog(@"AudioUnitSetProperty failed: %d", (int)err);
         
+        return NO;
+    }
+    
+    return YES;
+}
+
+- (BOOL)setOutputDeviceToDefaultOutputDeviceForEngine:(AVAudioEngine*)engine {
+    AudioDeviceID defaultOutputDevice = [self defaultOutputDevice];
+    
+    if (defaultOutputDevice == 0) {
+        return NO;
+    }
+    
+    if (![self setEngine:engine outputDevice:defaultOutputDevice]) {
         return NO;
     }
     
